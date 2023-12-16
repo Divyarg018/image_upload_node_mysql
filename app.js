@@ -41,6 +41,7 @@ app.post('/upload', (req, res) => {
     }
 
     sampleFile = req.files.sampleFile;
+    uploadPath = __dirname + '/upload/' + sampleFile.name;
 
     let fileName = 'img_' +
         now.getDate() +
@@ -52,14 +53,37 @@ app.post('/upload', (req, res) => {
         now.getMilliseconds() +
         '.jpg';
 
-    console.log(fileName);
+    console.log(sampleFile);
 
-    sampleFile.mv(__dirname + '/uploads/' + fileName, (err) => {
-        console.log(err);
+    //     sampleFile.mv(__dirname + '/uploads/' + fileName, (err) => {
+    //         console.log(err);
+    //     });
+
+    //     return res.end("Thank you")
+    // })
+    sampleFile.mv(uploadPath, function (err) {
+        if (err) return res.status(500).send(err);
+
+        // res.send("File uploaded successfully");
+
+        pool.getConnection((err, connection) => {
+            if (err) throw err;
+            console.log('Connected');
+
+            connection.query('UPDATE user SET profile_image = ? WHERE id="1"', [sampleFile.name], (err, rows) => {
+                connection.release();
+
+                if (!err) {
+                    res.redirect('/');
+                } else {
+                    console.log(err);
+                }
+            });
+        });
     });
 
-    return res.end("Thank you")
-})
+    // return res.end("Thank You");
+});
 
 app.listen(5000, () => {
     console.log("Listening on port 5000");
