@@ -3,10 +3,13 @@ const { engine } = require('express-handlebars');
 const fileUpload = require('express-fileupload');
 
 const app = express();
+
 app.use(express.json());
 app.use(fileUpload());
+
 app.use(express.static('public'));
-app.use('/photo', express.static('uploads'));
+// app.use('/photo', express.static('uploads'));
+app.use(express.static('upload'));
 
 // Templating engine
 app.engine('hbs', engine({ extname: '.hbs' }));
@@ -14,7 +17,18 @@ app.set('view engine', 'hbs');
 
 
 app.get('/', (req, res) => {
-    res.render('index');
+    pool.getConnection((err, connection) => {
+        if (err) throw err;
+        console.log('Connected');
+
+        connection.query('SELECT * FROM user WHERE id = "1"', (err, rows) => {
+            connection.release();
+
+            if (!err) {
+                res.render('index', { rows });
+            }
+        });
+    });
 });
 
 app.post('/upload', (req, res) => {
