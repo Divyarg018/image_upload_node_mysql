@@ -1,19 +1,34 @@
 const express = require('express');
 const { engine } = require('express-handlebars');
 const fileUpload = require('express-fileupload');
+const mysql = require('mysql');
 
 const app = express();
 
 app.use(express.json());
 app.use(fileUpload());
 
+//Static Files
 app.use(express.static('public'));
-// app.use('/photo', express.static('uploads'));
 app.use(express.static('upload'));
 
-// Templating engine
+//Temlating Engine
 app.engine('hbs', engine({ extname: '.hbs' }));
 app.set('view engine', 'hbs');
+
+
+const pool = mysql.createPool({
+    connectionLimit: 10,
+    host: 'localhost',
+    user: 'root',
+    password: 'root123',
+    database: 'userprofile'
+});
+
+pool.getConnection((err, connection) => {
+    if (err) throw err;
+    console.log('Connected');
+})
 
 
 app.get('/', (req, res) => {
@@ -31,36 +46,21 @@ app.get('/', (req, res) => {
     });
 });
 
+
 app.post('/upload', (req, res) => {
     let sampleFile;
     let uploadPath;
-    let now = new Date();
 
     if (!req.files || Object.keys(req.files).length === 0) {
-        return res.status(400).send('No images were selected');
+        return res.status(400).send('No image were selected.');
     }
 
     sampleFile = req.files.sampleFile;
     uploadPath = __dirname + '/upload/' + sampleFile.name;
 
-    let fileName = 'img_' +
-        now.getDate() +
-        (now.getMonth() + 1) +
-        now.getFullYear() +
-        now.getHours() +
-        now.getMinutes() +
-        now.getSeconds() +
-        now.getMilliseconds() +
-        '.jpg';
-
     console.log(sampleFile);
 
-    //     sampleFile.mv(__dirname + '/uploads/' + fileName, (err) => {
-    //         console.log(err);
-    //     });
-
-    //     return res.end("Thank you")
-    // })
+    //Use mv() to place file on the server
     sampleFile.mv(uploadPath, function (err) {
         if (err) return res.status(500).send(err);
 
@@ -86,5 +86,5 @@ app.post('/upload', (req, res) => {
 });
 
 app.listen(5000, () => {
-    console.log("Listening on port 5000");
-})
+    console.log("Server Started at Port 5000");
+});
